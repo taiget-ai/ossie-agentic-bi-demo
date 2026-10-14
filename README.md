@@ -1,10 +1,19 @@
-# Ossie Agentic BI Demo
+# Ossie Agentic BI Demo — A Semantic-First Approach to Reliable Conversational Analytics
 
 **Project release: 1.0.0**
 
-**Independent educational consumer of [Apache Ossie](https://github.com/apache/ossie) semantic metadata, not an official ASF query engine.**
+> A framework-agnostic, open-source reference implementation that transforms natural
+> language into structured semantic queries and compiles them into SQL through a
+> deterministic query planner.
+>
+> Inspired by production-grade analytics architecture and built around
+> [Apache Ossie](https://github.com/apache/ossie).
 
-Build governed analytics from natural language using a semantic model instead of asking an LLM to write SQL:
+This project is an independent educational consumer of Apache Ossie semantic metadata,
+not an official Apache Software Foundation query engine.
+
+It builds governed analytics from natural language through a semantic model instead of
+asking an LLM to write SQL directly:
 
 ```text
 Natural language (offline rules or OpenAI-compatible LLM)
