@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ossie-agentic-bi-demo"
+version = "1.0.0"
+description = "Apache Ossie semantic model demo with aggregate-aware logical plans, OpenAI-compatible providers, and DuckDB"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+keywords = ["ossie", "semantic-layer", "agentic-bi", "duckdb", "text-to-semantic-query"]
+dependencies = [
+  "pyyaml>=6.0,<7",
+  "duckdb>=1.2,<2",
+  "fastapi>=0.110,<1",
+  "uvicorn>=0.29,<1",
+  "pydantic>=2.6,<3",
+  "openai>=1.50,<3",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10", "httpx>=0.27,<1", "ruff>=0.9,<1", "jsonschema>=4.20,<5"]
+
+[project.scripts]
+ossie-demo = "ossie_demo.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["ossie_demo*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100

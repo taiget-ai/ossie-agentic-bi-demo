@@ -1,0 +1,266 @@
+version: 0.2.0.dev0
+name: gaming_analytics
+description: Small, auditable semantic model for a simulated gaming analytics dataset.
+ai_context:
+  instructions: All money is in USD. A bet is one transaction. Gross gaming revenue (GGR) is stake minus
+    payout; demo net gaming revenue (NGR) additionally subtracts bonus cost. This is an illustrative metric
+    definition, not an industry standard. Deposit activity is tracked at a separate fact grain from bets;
+    aggregates must be joined only after grouping.
+datasets:
+- name: bets
+  source: bets
+  primary_key:
+  - bet_id
+  description: One row per bet transaction (fact grain).
+  fields:
+  - name: bet_id
+    datatype: Integer
+    expression:
+      dialects:
+      - dialect: ANSI_SQL
+        expression: bet_id
+  - name: player_id
+    datatype: Integer
+    expression:
+      dialects:
+      - dialect: ANSI_SQL
+        expression: player_id
+  - name: game_id
+    datatype: Integer
+    expression:
+      dialects:
+      - dialect: ANSI_SQL
+        expression: game_id
+  - name: bet_date
+    datatype: Date
+    dimension:
+      is_time: true
+    description: Day of bet in demo server time.
+    ai_context:
+      synonyms:
+      - date
+      - day
+      - daily
+      - by day
+    expression:
+      dialects:
+      - dialect: ANSI_SQL
+        expression: bet_date
+  - name: amount
+    datatype: Decimal
+    description: Stake in USD.
+    expression:
+      dialects:
+      - dialect: ANSI_SQL
+        expression: amount
+  - name: payout_amount
+    datatype: Decimal
+    expression:
+      dialects:
+      - dialect: ANSI_SQL
+        expression: payout_amount
+  - name: bonus_cost
+    datatype: Decimal
+    expression:
+      dialects:
+      - dialect: ANSI_SQL
+        expression: bonus_cost
+- name: players
+  source: players
+  primary_key:
+  - player_id
+  description: Player dimension; at most one row per player.
+  fields:
+  - name: player_id
+    datatype: Integer
+    expression:
+      dialects:
+      - dialect: ANSI_SQL
+        expression: player_id
+  - name: country
+    datatype: String
+    dimension:
+      is_time: false
+    description: ISO country code of the player. Display names and aliases are defined in gaming.values.yaml.
+    ai_context:
+      synonyms:
+      - country
+      - market
+      - region
+    expression:
+      dialects:
+      - dialect: ANSI_SQL
+        expression: country
+- name: games
+  source: games
+  primary_key:
+  - game_id
+  description: Game dimension; at most one row per game.
+  fields:
+  - name: game_id
+    datatype: Integer
+    expression:
+      dialects:
+      - dialect: ANSI_SQL
+        expression: game_id
+  - name: game_category
+    datatype: String
+    dimension:
+      is_time: false
+    description: Game category (Sports or Casino).
+    ai_context:
+      synonyms:
+      - game category
+      - game type
+      - category
+    expression:
+      dialects:
+      - dialect: ANSI_SQL
+        expression: game_category
+- name: deposits
+  source: deposits
+  primary_key:
+  - deposit_id
+  description: One row per deposit; independent of bet grain.
+  fields:
+  - name: deposit_id
+    datatype: Integer
+    expression:
+      dialects:
+      - dialect: ANSI_SQL
+        expression: deposit_id
+  - name: player_id
+    datatype: Integer
+    expression:
+      dialects:
+      - dialect: ANSI_SQL
+        expression: player_id
+  - name: deposit_date
+    datatype: Date
+    expression:
+      dialects:
+      - dialect: ANSI_SQL
+        expression: deposit_date
+    dimension:
+      is_time: true
+    description: Date of deposit
+    ai_context:
+      synonyms:
+      - deposit date
+  - name: amount
+    datatype: Decimal
+    expression:
+      dialects:
+      - dialect: ANSI_SQL
+        expression: amount
+    description: Amount deposited USD
+relationships:
+- name: bets_to_players
+  from: bets
+  to: players
+  from_columns:
+  - player_id
+  to_columns:
+  - player_id
+- name: bets_to_games
+  from: bets
+  to: games
+  from_columns:
+  - game_id
+  to_columns:
+  - game_id
+- name: deposits_to_players
+  from: deposits
+  to: players
+  from_columns:
+  - player_id
+  to_columns:
+  - player_id
+metrics:
+- name: total_stake
+  datatype: Decimal
+  description: Sum of amounts wagered, USD.
+  ai_context:
+    synonyms:
+    - total stake
+    - turnover
+    - total wagered
+    - wagered amount
+    examples:
+    - Show total stake by country
+    - Total stake by game category
+  expression:
+    dialects:
+    - dialect: ANSI_SQL
+      expression: SUM(bets.amount)
+- name: bet_count
+  datatype: Integer
+  description: Number of bet transactions.
+  ai_context:
+    synonyms:
+    - bet count
+    - number of bets
+    - transactions
+  expression:
+    dialects:
+    - dialect: ANSI_SQL
+      expression: COUNT(bets.bet_id)
+- name: ngr
+  datatype: Decimal
+  description: 'Illustrative NGR: stake - payout - bonus cost, USD.'
+  ai_context:
+    synonyms:
+    - ngr
+    - net gaming revenue
+    - net revenue
+  expression:
+    dialects:
+    - dialect: ANSI_SQL
+      expression: SUM(bets.amount - bets.payout_amount - bets.bonus_cost)
+- name: unique_bettors
+  datatype: Decimal
+  description: Unique players who placed bets
+  expression:
+    dialects:
+    - dialect: ANSI_SQL
+      expression: COUNT(DISTINCT bets.player_id)
+  ai_context:
+    synonyms:
+    - unique bettors
+    - distinct players
+    - active bettors
+- name: stake_per_bettor
+  datatype: Decimal
+  description: Stake per unique betting player; safe divide by zero.
+  expression:
+    dialects:
+    - dialect: ANSI_SQL
+      expression: SUM(bets.amount) / COUNT(DISTINCT bets.player_id)
+  ai_context:
+    synonyms:
+    - stake per bettor
+    - average stake per player
+    - stake per player
+- name: total_deposit
+  datatype: Decimal
+  description: Sum of deposits in USD; deposit grain.
+  expression:
+    dialects:
+    - dialect: ANSI_SQL
+      expression: SUM(deposits.amount)
+  ai_context:
+    synonyms:
+    - total deposit
+    - total deposits
+    - deposit amount
+- name: deposit_count
+  datatype: Decimal
+  description: Number of deposits.
+  expression:
+    dialects:
+    - dialect: ANSI_SQL
+      expression: COUNT(deposits.deposit_id)
+  ai_context:
+    synonyms:
+    - deposit count
+    - number of deposits

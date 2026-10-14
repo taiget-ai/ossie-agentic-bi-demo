@@ -1,0 +1,14 @@
+{"question":"Show total stake by country","metrics":["total_stake"],"dimensions":["country"],"filters":{}}
+{"question":"Show net gaming revenue by game category","metrics":["ngr"],"dimensions":["game_category"],"filters":{}}
+{"question":"Show total stake and bet count by country","metrics":["total_stake","bet_count"],"dimensions":["country"],"filters":{}}
+{"question":"Show total stake by country and game category","metrics":["total_stake"],"dimensions":["country","game_category"],"filters":{}}
+{"question":"Show total stake in Finland in the last 7 days","metrics":["total_stake"],"dimensions":[],"filters":{"country":"FI"}}
+{"question":"Show bet count by country for the last 7 days","metrics":["bet_count"],"dimensions":["country"],"filters":{}}
+{"question":"Show NGR and total stake by game category","metrics":["ngr","total_stake"],"dimensions":["game_category"],"filters":{}}
+{"question":"Show total deposit by country","metrics":["total_deposit"],"dimensions":["country"],"filters":{}}
+{"question":"Show stake per bettor by country","metrics":["stake_per_bettor"],"dimensions":["country"],"filters":{}}
+{"question":"Show total stake and total deposit by country","metrics":["total_stake","total_deposit"],"dimensions":["country"],"filters":{}}
+{"question":"Show NGR and unique bettors by game category","metrics":["ngr","unique_bettors"],"dimensions":["game_category"],"filters":{}}
+{"question": "Show total stake and total deposit by day and country", "metrics": ["total_stake", "total_deposit"], "dimensions": ["country"], "filters": {}, "time_grain": "day"}
+{"question": "Show total stake and total deposit by week and country", "metrics": ["total_stake", "total_deposit"], "dimensions": ["country"], "filters": {}, "time_grain": "week"}
+{"question": "Show total stake and total deposit by month and country", "metrics": ["total_stake", "total_deposit"], "dimensions": ["country"], "filters": {}, "time_grain": "month"}

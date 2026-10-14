@@ -1,0 +1,41 @@
+country:
+- value: FI
+  label: Finland
+  aliases: []
+- value: SG
+  label: Singapore
+  aliases: []
+- value: DE
+  label: Germany
+  aliases: []
+- value: US
+  label: United States
+  aliases:
+  - USA
+  - United States of America
+- value: GB
+  label: United Kingdom
+  aliases:
+  - UK
+  - Britain
+- value: CA
+  label: Canada
+  aliases: []
+- value: AU
+  label: Australia
+  aliases: []
+- value: JP
+  label: Japan
+  aliases: []
+- value: IN
+  label: India
+  aliases: []
+- value: BR
+  label: Brazil
+  aliases: []
+- value: FR
+  label: France
+  aliases: []
+- value: ES
+  label: Spain
+  aliases: []

@@ -1,0 +1,16 @@
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.py[cod]
+*.egg-info/
+.venv/
+.env
+.env.*
+!.env.example
+data/*.duckdb
+data/*.sqlite
+*.duckdb
+*.db
+.DS_Store
+.idea
+.github

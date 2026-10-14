@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Ossie · Semantic Analytics Workspace</title>
+  <link rel="stylesheet" href="/assets/style.css?v=input-6">
+</head>
+<body>
+<main class="container">
+  <header class="hero">
+    <div class="row top-bar">
+      <div class="brand-group">
+        <span class="eyebrow">APACHE OSSIE · SEMANTIC BI WORKSPACE</span>
+        <span class="pill-badge" data-en="LLM Never Writes SQL · Deterministic Compiler" data-zh="大模型不写 SQL · 确定性语义编译"></span>
+      </div>
+      <label class="lang-switch">
+        <span data-en="Language" data-zh="界面语言"></span>
+        <select id="language">
+          <option value="zh">中文</option>
+          <option value="en">English</option>
+        </select>
+      </label>
+    </div>
+    <h1 data-en="Ask in natural language. Audit every number." data-zh="用自然语言，探索每一个数字。"></h1>
+    <p class="intro" data-en="Ask questions, explore results, compare changes, and inspect the evidence behind each number." data-zh="提问、下钻、比较变化，并随时查看指标口径与查询依据。"></p>
+
+    <nav class="workspace-tabs" role="tablist" aria-label="Workspace views">
+      <button type="button" class="nav-tab active" data-tab="explore" data-en="Explore" data-zh="查询探索"></button>
+      <button type="button" class="nav-tab" data-tab="period" data-en="Compare Periods" data-zh="期间对比"></button>
+      <button type="button" class="nav-tab" data-tab="sandbox" data-en="Formula Sandbox" data-zh="公式试算"></button>
+      <button type="button" class="nav-tab" data-tab="inspector" data-en="Query Inspector" data-zh="查询详情"></button>
+    </nav>
+    <div id="status" role="status" aria-live="polite"></div>
+  </header>
+
+  <!-- TAB 1: ASK, RESULTS, METRIC EXPLAIN & DRILL-DOWN -->
+  <div id="tab-explore" class="tab-pane active">
+    <section class="card query-card">
+      <div class="row card-header">
+        <div>
+          <h2 data-en="Ask a question" data-zh="输入业务问题"></h2>
+          <p class="section-sub" data-en="Configure an LLM to interpret your question, or switch to offline rules or structured JSON." data-zh="默认使用大模型理解业务问题，请先配置模型；也可切换离线规则（无需密钥）或结构化 JSON。"></p>
+        </div>
+        <div class="mode-control">
+          <label for="mode" data-en="Input mode" data-zh="输入模式"></label>
+          <select id="mode" aria-label="Parser">
+            <option value="llm" data-en="Natural Language · LLM Parser" data-zh="自然语言 · 大模型理解 (LLM)"></option>
+            <option value="rules" data-en="Natural Language · Offline Rules" data-zh="自然语言 · 离线规则（免密钥）"></option>
+            <option value="structured" data-en="Advanced · Structured JSON" data-zh="高级模式 · 结构化语义 JSON"></option>
+          </select>
+        </div>
+      </div>
+
+      <details class="catalog-disclosure"><summary data-en="Available metrics & dimensions" data-zh="可用指标与维度"></summary><div id="catalog-strip" class="catalog-strip"></div></details>
+
+      <div id="question-box">
+        <label for="question" data-en="Business question (Chinese or English)" data-zh="你的问题"></label>
+        <textarea id="question" rows="2">按国家统计总投注额、总充值额、投注人数和人均投注额</textarea>
+      </div>
+
+      <div id="structured-box" hidden>
+        <label for="structured" data-en="Semantic query JSON" data-zh="结构化语义查询 JSON (SemanticQuery)"></label>
+        <textarea id="structured" rows="5">{"metrics":["total_stake","total_deposit","unique_bettors","stake_per_bettor"],"dimensions":["country"]}</textarea>
+        <p class="hint" data-en="Use order_by for sorting, limit for Top N, and arrays in filters for multiple countries." data-zh="支持 order_by 排序、limit 限制 Top N，以及在 filters 中使用数组筛选多个国家（如 [&quot;US&quot;,&quot;JP&quot;]）。"></p>
+      </div>
+
+      <div id="provider" hidden>
+        <div class="row">
+          <h3 data-en="OpenAI-Compatible LLM Settings (Transient · Per Request)" data-zh="大模型接口配置（仅随单次请求发送，服务端绝不落盘保存）"></h3>
+          <label class="control-inline">
+            <span data-en="Preset" data-zh="快捷预设"></span>
+            <select id="provider-preset">
+              <option value="openai">OpenAI</option>
+              <option value="deepseek">DeepSeek</option>
+              <option value="qwen">Qwen</option>
+              <option value="ollama">Ollama (Local)</option>
+              <option value="openrouter">OpenRouter</option>
+              <option value="custom">Custom</option>
+            </select>
+          </label>
+        </div>
+        <div class="field-grid">
+          <label><span data-en="API base URL" data-zh="API 地址 (Base URL)"></span><input id="base-url" placeholder="https://api.openai.com/v1"></label>
+          <label><span data-en="Model ID" data-zh="模型名称 (Model ID)"></span><input id="model" value="gpt-4o-mini"></label>
+          <label><span data-en="API token" data-zh="API 密钥 (本地 Ollama 可留空)"></span><input id="api-key" type="password" autocomplete="off"></label>
+          <label class="check"><input id="json-mode" type="checkbox" checked><span data-en="JSON response format" data-zh="启用 JSON 响应格式 (json_object)"></span></label>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="run" class="primary-btn" data-en="Run Query" data-zh="执行查询"></button>
+        <button id="plan-only" class="secondary" hidden data-en="Compile Plan Only (No DB)" data-zh="仅编译执行计划（不查库）"></button>
+      </div>
+
+      <div class="examples-wrap">
+        <span class="examples-label" data-en="Quick scenarios:" data-zh="一键体验典型场景："></span>
+        <div id="examples" class="examples"></div>
+      </div>
+    </section>
+
+    <section class="card results-card">
+      <div class="row card-header">
+        <div>
+          <h2 data-en="Query results" data-zh="查询结果"></h2>
+          <p class="section-sub" data-en="Click a number to inspect its definition, or drill down to explore a group." data-zh="点击数字查看指标口径，点击「下钻」继续探索。"></p>
+        </div>
+        <div class="result-actions">
+          <button type="button" id="peek-sql-btn" class="secondary" data-en="View Compiled SQL & Plan" data-zh="查看 SQL"></button>
+          <button id="export" class="secondary" disabled data-en="Export Repro ZIP" data-zh="导出复现包"></button>
+        </div>
+      </div>
+
+      <div id="active-query-bar" class="active-query-bar" hidden></div>
+
+      <div id="breadcrumbs-wrap" class="breadcrumbs-bar" hidden>
+        <span class="crumb-label" data-en="Drill-down path (click to go back):" data-zh="当前探索路径（点击任意节点可回退）："></span>
+        <div id="breadcrumbs" class="examples"></div>
+      </div>
+
+      <div id="results" class="results-container" aria-live="polite"></div>
+
+      <div class="interactive-panels">
+        <div id="drill-controls" class="sub-panel drill-panel" hidden>
+          <div class="row">
+            <h3 data-en="Drill Down · Choose Target Dimension" data-zh="下钻探索 · 请选择要穿透的下一层维度"></h3>
+            <span id="drill-selection-badge" class="badge"></span>
+          </div>
+          <p class="hint" data-en="Compatible dimensions are validated by the semantic planner. Incompatible dimensions (such as game_category when deposit metrics are selected) are automatically blocked." data-zh="编译器已自动校验所有维度与当前指标的 JOIN 树兼容性（例如含「总充值额」时会自动拦截无关联的「游戏类别」维度）。"></p>
+          <div id="drill-targets" class="examples"></div>
+        </div>
+
+        <section id="metric-panel" class="sub-panel metric-explain-panel" hidden>
+          <div class="row">
+            <h3 data-en="Metric Definition & Live Component Breakdown" data-zh="指标口径定义与当前分组分子/分母实算"></h3>
+            <button id="close-metric" class="secondary small-btn" data-en="Close" data-zh="收起"></button>
+          </div>
+          <div id="metric-content"></div>
+        </section>
+      </div>
+    </section>
+  </div>
+
+  <!-- TAB 2: PERIOD COMPARISON & CONTRIBUTION -->
+  <div id="tab-period" class="tab-pane" hidden>
+    <section class="card">
+      <div class="row card-header">
+        <div>
+          <h2 data-en="Period-over-Period Comparison & Additive Contribution" data-zh="期间对比与贡献分解"></h2>
+          <p class="section-sub" data-en="Defaults to the latest two complete calendar months. Only additive metrics (SUM / non-distinct COUNT) are allowed; ratios and distinct counts are rejected to prevent math errors." data-zh="默认对比最近两个完整自然月（也可自定义两个日期区间）。仅允许对可加性指标（SUM / 非去重 COUNT）做贡献率分解，自动拦截比率与去重指标以防算术失真。"></p>
+        </div>
+      </div>
+      <div class="field-grid period-fields">
+        <label><span data-en="Additive Metric" data-zh="选择可加性指标"></span><select id="period-metric"></select></label>
+        <label><span data-en="Break down by dimension" data-zh="拆解维度"></span><select id="period-dimension"></select></label>
+        <label><span data-en="Previous period start" data-zh="基期开始"></span><input type="date" id="previous-start"></label>
+        <label><span data-en="Previous period end" data-zh="基期结束"></span><input type="date" id="previous-end"></label>
+        <label><span data-en="Current period start" data-zh="当期开始"></span><input type="date" id="current-start"></label>
+        <label><span data-en="Current period end" data-zh="当期结束"></span><input type="date" id="current-end"></label>
+        <label><span data-en="Top N groups (sorted by largest decrease)" data-zh="展示前 N 个分组（按变化量升序）"></span><input id="top-n" type="number" min="1" max="100" value="12"></label>
+      </div>
+      <div class="actions">
+        <button id="compare-period" data-en="Run Period Comparison" data-zh="比较期间"></button>
+      </div>
+      <div id="period-result" aria-live="polite"></div>
+    </section>
+  </div>
+
+  <!-- TAB 3: MODEL CHANGE COMPARISON SANDBOX -->
+  <div id="tab-sandbox" class="tab-pane" hidden>
+    <section class="card">
+      <div class="row card-header">
+        <div>
+          <h2 data-en="Metric Formula Governance Sandbox" data-zh="指标公式试算"></h2>
+          <p class="section-sub" data-en="Test a candidate metric expression against the active query on the exact same read snapshot without modifying models/gaming.yaml." data-zh="在不修改已保存 YAML 模型文件的前提下，临时改写某个指标的计算公式（如把 NGR 改为不扣减 bonus_cost），在同一数据库事务快照下对比全部分组的原值、新值与差额。"></p>
+        </div>
+      </div>
+      <div class="field-grid">
+        <label><span data-en="Metric from current query" data-zh="选择当前查询中的指标"></span><select id="change-metric"></select></label>
+        <label><span data-en="Quick formula preset" data-zh="快速填入候选公式示例"></span>
+          <select id="sandbox-preset">
+            <option value="" data-en="-- Edit expression below --" data-zh="-- 在下方直接编辑或选择预设 --"></option>
+            <option value="SUM(bets.amount - bets.payout_amount)" data-en="Gross Gaming Revenue: SUM(bets.amount - bets.payout_amount)" data-zh="毛收入口径 (不扣红利): SUM(bets.amount - bets.payout_amount)"></option>
+            <option value="SUM(bets.amount) / COUNT(bets.bet_id)" data-en="Average Stake per Bet: SUM(bets.amount) / COUNT(bets.bet_id)" data-zh="单均投注额 (按笔数而非人数): SUM(bets.amount) / COUNT(bets.bet_id)"></option>
+            <option value="SUM(bets.payout_amount)" data-en="Total Payout: SUM(bets.payout_amount)" data-zh="总派彩额: SUM(bets.payout_amount)"></option>
+          </select>
+        </label>
+      </div>
+      <label for="candidate" data-en="Candidate ANSI_SQL metric expression (restricted AST)" data-zh="候选指标公式表达式（通过受限 AST 语法树安全校验）"></label>
+      <textarea id="candidate" rows="3"></textarea>
+      <div class="actions">
+        <button id="compare-model" data-en="Compare Old vs Candidate Formula" data-zh="对比原口径与新口径差异"></button>
+      </div>
+      <p id="sandbox-empty" class="hint" data-en="Run a query in Explore first, then choose a metric to compare." data-zh="先在「查询探索」中执行查询，再选择指标进行试算。"></p>
+      <div id="model-result" aria-live="polite"></div>
+    </section>
+  </div>
+
+  <!-- TAB 4: QUERY INSPECTOR & WAREHOUSE DATA -->
+  <div id="tab-inspector" class="tab-pane" hidden>
+    <section class="card inspector">
+      <div class="row card-header">
+        <div>
+          <h2 data-en="Semantic Query Inspector & Multi-Fact Plan" data-zh="查询计划与 SQL"></h2>
+          <p class="section-sub" data-en="See how metrics from different fact tables (bets vs deposits) are aggregated in isolated CTE branches before joining on shared dimensions." data-zh="展示编译器如何将不同粒度事实表（bets 投注表与 deposits 充值表）拆分为独立聚合分支（避免多对多 JOIN 扇出），最后按公共维度键安全对齐。"></p>
+        </div>
+        <span id="inspection-state" class="badge"></span>
+      </div>
+    <div class="pipeline-strip" aria-label="Architecture pipeline">
+      <div class="step-chip"><span class="step-num">1</span><span data-en="NL / Intent Parser" data-zh="自然语言 / 意图解析"></span></div>
+      <span class="step-arrow">→</span>
+      <div class="step-chip"><span class="step-num">2</span><span data-en="SemanticQuery (YAML Governance)" data-zh="受控语义查询 (SemanticQuery)"></span></div>
+      <span class="step-arrow">→</span>
+      <div class="step-chip"><span class="step-num">3</span><span data-en="Multi-Fact Branch Planner" data-zh="多事实表防扇出规划 (LogicalPlan)"></span></div>
+      <span class="step-arrow">→</span>
+      <div class="step-chip"><span class="step-num">4</span><span data-en="Parameterized DuckDB SQL" data-zh="参数化 SQL 执行与下钻"></span></div>
+    </div>
+
+      <p id="inspection-summary" class="hint"></p>
+      <div id="branches" class="branch-grid"></div>
+      <div id="merge-summary" class="merge-summary" hidden></div>
+      <details>
+        <summary data-en="SemanticQuery JSON, LogicalQueryPlan & Parameterized SQL" data-zh="展开查看：SemanticQuery 语义请求、LogicalQueryPlan 逻辑计划与最终参数化 SQL"></summary>
+        <div class="code-triple">
+          <div><h4 data-en="1. SemanticQuery (Validated Intent)" data-zh="1. 语义查询 (SemanticQuery)"></h4><pre id="semantic"></pre></div>
+          <div><h4 data-en="2. Parameterized SQL & Bound Params" data-zh="2. 编译生成的参数化 SQL"></h4><pre id="sql"></pre></div>
+        </div>
+        <h4 data-en="3. Complete LogicalQueryPlan JSON" data-zh="3. 完整逻辑执行计划 (LogicalQueryPlan)"></h4>
+        <pre id="logical"></pre>
+      </details>
+    </section>
+
+    <section class="card">
+      <div class="row card-header">
+        <div>
+          <h2 data-en="Warehouse Raw Tables (DuckDB / SQLite)" data-zh="原始数据预览"></h2>
+          <p class="section-sub" data-en="Inspect the actual physical tables in DuckDB. Each country now has 3 distinct players with varied betting and deposit histories." data-zh="直接浏览 DuckDB 中的 4 张物理表：每个国家均包含多名不同行为特征的玩家，支持真实的人均比率计算与跨月下钻。"></p>
+        </div>
+        <button id="reset" class="secondary" data-en="Reset Demo Data" data-zh="重置示例数据库"></button>
+      </div>
+      <div id="tables" class="table-tabs"></div>
+      <div id="db-meta" class="hint"></div>
+      <div id="preview"></div>
+    </section>
+  </div>
+
+  <footer>
+    <span data-en="Independent Apache Ossie consumer · local reference implementation" data-zh="独立 Apache Ossie 语义消费端 · 本地参考实现"></span>
+    · <a href="/docs" data-en="Interactive OpenAPI Docs (/docs)" data-zh="OpenAPI 交互文档 (/docs)"></a>
+  </footer>
+</main>
+<script src="/assets/app.js?v=input-6"></script>
+</body>
+</html>
